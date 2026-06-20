@@ -7,6 +7,7 @@
 // Groq or Cerebras key the same generation finishes in ~2-3s.
 import { streamText } from "ai";
 import { candidates } from "@/lib/providers";
+import { rateLimit, SHARED_LIMIT } from "@/lib/ratelimit";
 import { tokensPrompt, type Tokens } from "@/lib/tokens";
 
 export const runtime = "nodejs";
@@ -44,11 +45,34 @@ export async function POST(req: Request) {
   const prompt = (body.prompt ?? "").trim();
   if (!prompt) return Response.json({ error: "prompt is required" }, { status: 400 });
 
-  const cands = candidates();
+  // BYO key: a visitor's own free NVIDIA key uses THEIR quota and skips the
+  // shared-key rate limit. Otherwise the host's free key is guarded per-IP so
+  // one visitor can't exhaust it for everyone.
+  const userKey = req.headers.get("x-nvidia-key")?.trim() || undefined;
+  if (!userKey) {
+    const ip = (req.headers.get("x-forwarded-for") ?? "local").split(",")[0].trim();
+    const rl = rateLimit(ip);
+    if (!rl.ok) {
+      return Response.json(
+        {
+          error: `You've hit the shared-key limit (${SHARED_LIMIT}/hour). Add your own free NVIDIA key in settings to keep generating — it's instant and unlimited for you.`,
+          retryAfterMs: rl.resetMs,
+          needKey: true,
+        },
+        { status: 429, headers: { "retry-after": String(Math.ceil(rl.resetMs / 1000)) } },
+      );
+    }
+  }
+
+  const cands = candidates(userKey);
   if (cands.length === 0) {
     return Response.json(
-      { error: "No model key set. Add NVIDIA_API_KEY (free at build.nvidia.com) to .env.local." },
-      { status: 500 },
+      {
+        error: userKey
+          ? "That key didn't work for NVIDIA NIM — check it at build.nvidia.com."
+          : "No model key set on the server.",
+      },
+      { status: userKey ? 400 : 500 },
     );
   }
 

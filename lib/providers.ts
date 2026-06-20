@@ -31,11 +31,17 @@ const CHAIN: Array<[string, string]> = [
 
 export type Candidate = { model: LanguageModel; label: string };
 
-export function candidates(): Candidate[] {
+// `userNimKey` (BYO key) overrides the server's NVIDIA key for the NIM entries —
+// so a visitor can use their OWN free key and never touch the host's quota. When
+// set we also lead with NIM, the provider their key unlocks.
+export function candidates(userNimKey?: string): Candidate[] {
+  const chain = userNimKey
+    ? [...CHAIN].sort((a, b) => (a[0] === "nim" ? -1 : b[0] === "nim" ? 1 : 0))
+    : CHAIN;
   const out: Candidate[] = [];
-  for (const [provKey, modelId] of CHAIN) {
+  for (const [provKey, modelId] of chain) {
     const def = PROVIDERS[provKey];
-    const apiKey = process.env[def.keyEnv];
+    const apiKey = provKey === "nim" && userNimKey ? userNimKey : process.env[def.keyEnv];
     if (!apiKey) continue;
     const provider = createOpenAICompatible({ name: provKey, baseURL: def.baseURL, apiKey });
     out.push({ model: provider(modelId), label: `${provKey}:${modelId}` });

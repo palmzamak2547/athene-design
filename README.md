@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎨 Athene Design
 
-## Getting Started
+Free, frontier-class **prompt → editable UI**. Describe a component, watch it
+stream in, see it live — on-brand to *your* design tokens. Part of the open
+**Athene** suite (alongside [Athene CLI](https://github.com/palmzamak2547/athene-cli)).
 
-First, run the development server:
+It doesn't train a model; it orchestrates the best **free** ones (NVIDIA NIM,
+Groq, Cerebras, OpenRouter) behind one interface — the same engine as the CLI.
+
+## Why it's different
+
+Every incumbent (v0 / Bolt / Claude Artifacts / Canvas) generates raw, generic
+UI with **no design-system awareness**. Athene Design constrains generation to a
+**token set you control** — primary, surface, ink, muted, radius, font — so the
+output is on-brand, not another generic 3-column card grid. That's the wedge.
+
+- **Live preview** — the generated component runs in a sandboxed iframe (Sandpack
+  + Tailwind), not just shown as text.
+- **Streaming** — tokens appear in well under a second (time-to-first-byte ~0.75s
+  on free NIM; ~2-3s end-to-end with a Groq/Cerebras key), so it never feels like
+  a blank wait.
+- **Design tokens** — edit your brand colors/radius live; every generation obeys them.
+- **Version history** — every generation is a checkpoint you can restore (AI edits
+  regress; cheap undo makes iteration safe).
+- **Iterate in place** — your next prompt edits the current component, not a fresh one.
+
+## Quick start
 
 ```bash
+npm install
+echo "NVIDIA_API_KEY=nvapi-..." > .env.local   # free at build.nvidia.com
+# optional, much faster: GROQ_API_KEY=... or CEREBRAS_API_KEY=...
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the studio, type a prompt (e.g. *"a pricing page with 3 tiers and a
+monthly/annual toggle"*), and watch it build.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Next.js 16 (App Router) · React 19 · Tailwind 4 · `@codesandbox/sandpack-react`
+for the live preview · Vercel AI SDK 5 + `@ai-sdk/openai-compatible` for the
+free-model failover chain (`lib/providers.ts`, shared shape with the CLI).
 
-## Learn More
+## Status
 
-To learn more about Next.js, take a look at the following resources:
+**Phase 0** — the core loop works end-to-end: prompt → streamed, token-aware
+component → live Sandpack preview → version history. Verified on free NIM
+(`llama-3.3-70b`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Next:** visual select-to-edit (click an element → change it with no LLM
+regen — the decisive feature), section-scoped edits, screenshot → UI, runtime
+error → auto-fix, and export to a real React/Tailwind/shadcn project.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT licensed.

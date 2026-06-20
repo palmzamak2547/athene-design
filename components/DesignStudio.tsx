@@ -5,9 +5,17 @@
 // right. Each generation is a version you can restore — AI edits regress, so
 // cheap undo is what makes aggressive iteration safe.
 import { useState } from "react";
-import { Sandpack } from "@codesandbox/sandpack-react";
+import {
+  SandpackProvider,
+  SandpackLayout,
+  SandpackCodeEditor,
+  SandpackPreview,
+} from "@codesandbox/sandpack-react";
 import { defaultTokens, type Tokens } from "@/lib/tokens";
 import { extractCode } from "@/lib/extract";
+
+const VIEWPORTS = { desktop: "100%", tablet: "768px", mobile: "390px" } as const;
+type Viewport = keyof typeof VIEWPORTS;
 
 const STARTER = `import React from "react";
 
@@ -46,6 +54,7 @@ export default function DesignStudio() {
   const [error, setError] = useState("");
   const [model, setModel] = useState("");
   const [copied, setCopied] = useState(false);
+  const [viewport, setViewport] = useState<Viewport>("desktop");
 
   async function copyCode() {
     try {
@@ -248,7 +257,23 @@ export default function DesignStudio() {
         </aside>
 
         {/* Right: live preview + code (with a streaming overlay while generating) */}
-        <section className="relative min-h-0">
+        <section className="relative flex min-h-0 flex-col">
+          {/* viewport toggle */}
+          <div className="flex items-center gap-1 border-b border-black/5 px-3 py-1.5">
+            {(Object.keys(VIEWPORTS) as Viewport[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setViewport(v)}
+                className={`rounded px-2.5 py-0.5 text-xs capitalize transition ${
+                  viewport === v ? "bg-[#10B981] text-white" : "text-[#64748B] hover:bg-black/5"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+            <span className="ml-auto text-[11px] text-[#94A3B8]">{VIEWPORTS[viewport]}</span>
+          </div>
+
           {loading && (
             <div className="absolute inset-0 z-10 flex flex-col bg-[#0F172A]">
               <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2 text-xs text-white/70">
@@ -260,20 +285,30 @@ export default function DesignStudio() {
               </pre>
             </div>
           )}
-          <Sandpack
+
+          <SandpackProvider
             key={gen /* remount fresh on each generation / version restore */}
             template="react-ts"
             files={{ "/App.tsx": code }}
             theme="light"
-            options={{
-              externalResources: ["https://cdn.tailwindcss.com"],
-              showTabs: true,
-              showLineNumbers: true,
-              editorHeight: "100%",
-              editorWidthPercentage: 45,
-            }}
-            customSetup={{ dependencies: {} }}
-          />
+            options={{ externalResources: ["https://cdn.tailwindcss.com"] }}
+          >
+            <SandpackLayout style={{ flex: 1, minHeight: 0, border: "none", borderRadius: 0 }}>
+              <SandpackCodeEditor showLineNumbers showTabs style={{ height: "100%" }} />
+              <div className="min-w-0 flex-1 overflow-auto bg-black/[0.03] p-3">
+                <div
+                  className="mx-auto h-full bg-white shadow-sm transition-all"
+                  style={{ width: VIEWPORTS[viewport], maxWidth: "100%" }}
+                >
+                  <SandpackPreview
+                    showOpenInCodeSandbox={false}
+                    showRefreshButton
+                    style={{ height: "100%" }}
+                  />
+                </div>
+              </div>
+            </SandpackLayout>
+          </SandpackProvider>
         </section>
       </div>
     </div>

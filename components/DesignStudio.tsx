@@ -41,6 +41,14 @@ const EXAMPLES = [
   "a stats row: 4 KPI cards with a label, big number, and trend",
 ];
 
+// One-click refinements (Canvas-style) applied to the current component.
+const QUICK_ACTIONS: { label: string; prompt: string }[] = [
+  { label: "Make responsive", prompt: "Make this fully responsive — it should look great on mobile, tablet, and desktop." },
+  { label: "Add hover/focus", prompt: "Add tasteful hover and focus states to all interactive elements, keyboard-accessible." },
+  { label: "Improve hierarchy", prompt: "Improve the visual hierarchy and spacing — sharpen typography scale, alignment, and whitespace." },
+  { label: "Add dark mode", prompt: "Add a dark-mode variant using the design tokens, with a toggle." },
+];
+
 type Version = { prompt: string; code: string; model?: string };
 
 export default function DesignStudio() {
@@ -81,8 +89,8 @@ export default function DesignStudio() {
     setGen((g) => g + 1);
   };
 
-  async function generate() {
-    const p = prompt.trim();
+  async function generate(override?: string) {
+    const p = (override ?? prompt).trim();
     if (!p || loading) return;
     setLoading(true);
     setError("");
@@ -197,6 +205,23 @@ export default function DesignStudio() {
                       className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-left text-[11px] text-[#475569] transition hover:border-[#10B981] hover:text-[#0F172A]"
                     >
                       {ex.length > 32 ? ex.slice(0, 32) + "…" : ex}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {history.length > 0 && (
+              <div className="mt-3">
+                <div className="mb-1.5 text-[10px] uppercase tracking-wide text-[#94A3B8]">refine</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_ACTIONS.map((qa) => (
+                    <button
+                      key={qa.label}
+                      onClick={() => generate(qa.prompt)}
+                      disabled={loading}
+                      className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] text-[#475569] transition hover:border-[#10B981] hover:text-[#0F172A] disabled:opacity-40"
+                    >
+                      {qa.label}
                     </button>
                   ))}
                 </div>

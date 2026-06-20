@@ -186,7 +186,7 @@ export default function DesignStudio() {
               className="w-full resize-none rounded-xl border border-black/10 bg-white p-3 text-sm outline-none focus:border-[#10B981]"
             />
             <button
-              onClick={generate}
+              onClick={() => generate()}
               disabled={loading || !prompt.trim()}
               className="mt-2 w-full rounded-xl bg-[#10B981] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-95 disabled:opacity-40"
             >
